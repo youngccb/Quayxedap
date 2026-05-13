@@ -9,9 +9,9 @@ const showPopup = ref(false)
 const popupMessage = ref('')
 
 const messages = {
-	A: 'Tuyệt vời! Con Cưng luôn cố gắng mang đủ mọi sản phẩm để ba mẹ đến một nơi là mua được hết cho bé. Cảm ơn ba mẹ đã tin chọn ạ!',
-	B: 'Cảm ơn ba mẹ! Đây chính là động lực để đội ngũ Con Cưng phục vụ nhiệt tình hơn mỗi ngày. Ba mẹ hài lòng là niềm vui lớn nhất của cửa hàng đó ạ!',
-	C: 'Ôi đúng rồi ạ! Chương trình ưu đãi luôn được Con Cưng chuẩn bị kỹ để tri ân khách hàng. Cảm ơn ba mẹ đã luôn đồng hành và săn quà cùng Con Cưng!'
+	A: 'A. Tuyệt vời! Con Cưng luôn cố gắng mang đủ mọi sản phẩm để ba mẹ đến một nơi là mua được hết cho bé. Cảm ơn ba mẹ đã tin chọn ạ!',
+	B: 'B. Cảm ơn ba mẹ! Đây chính là động lực để đội ngũ Con Cưng phục vụ nhiệt tình hơn mỗi ngày. Ba mẹ hài lòng là niềm vui lớn nhất của cửa hàng đó ạ!',
+	C: 'C. Ôi đúng rồi ạ! Chương trình ưu đãi luôn được Con Cưng chuẩn bị kỹ để tri ân khách hàng. Cảm ơn ba mẹ đã luôn đồng hành và săn quà cùng Con Cưng!'
 }
 
 const selectAnswer = (type) => {
