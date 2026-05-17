@@ -1,14 +1,37 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import PrizePopup from './components/PrizePopup.vue'
+
 const wheelCanvas = ref(null)
 const isSpinning = ref(false)
 const currentPrize = ref(null)
-
 const showPrizePopup = ref(false)
+
+
+const HAS_SPUN_KEY = 'concung_has_spun'
+const PRIZE_KEY = 'concung_current_prize'
+
+const hasSpun = ref(false)
+
+
+const centerLogo = new Image()
+centerLogo.src = '/img/logo.png'
+
 const prizeImages = {}
+
 onMounted(() => {
+	hasSpun.value = localStorage.getItem(HAS_SPUN_KEY) === '1'
+
+	const savedPrize = localStorage.getItem(PRIZE_KEY)
+	if (savedPrize) {
+		currentPrize.value = JSON.parse(savedPrize)
+	}
+
 	ctx = wheelCanvas.value.getContext('2d')
+
+	centerLogo.onload = () => {
+		drawWheel(0)
+	}
 
 	let loaded = 0
 	const total = prizes.filter(item => item.image).length
@@ -49,7 +72,7 @@ const prizes = [
 	{ id: 3, name: 'Xe chòi chân', color: '#ffffff', image: '/img/xechoi.png' },
 	{ id: 4, name: 'Chúc bạn may mắn lần sau', color: '#ef3f3f' },
 	{ id: 5, name: 'Xe đạp', color: '#ffffff', image: '/img/xedap.png' },
-	{ id: 6, name: 'Chúc bạn may mắn lần sau', color: '#ef3f3f' }
+	{ id: 6, name: 'Chúc bạn may mắn lần sau', color: '#ef3f3f' },
 ]
 
 let ctx = null
@@ -192,7 +215,6 @@ const drawWheel = (rotation = 0) => {
 			}
 		}
 	})
-
 	// vòng đèn ngoài khớp sát viền
 	const lightRadius = radius + 16
 	const lightCount = 24
@@ -223,15 +245,85 @@ const drawWheel = (rotation = 0) => {
 	ctx.lineWidth = 5
 	ctx.stroke()
 
-	ctx.fillStyle = '#e60012'
-	ctx.font = 'bold 13px Arial'
-	ctx.textAlign = 'center'
-	ctx.textBaseline = 'middle'
-	ctx.fillText('Con Cưng', cx, cy)
+	if (centerLogo.complete && centerLogo.naturalWidth > 0) {
+		const maxLogoWidth = 64
+		const maxLogoHeight = 34
+
+		const logoRatio = Math.min(
+			maxLogoWidth / centerLogo.naturalWidth,
+			maxLogoHeight / centerLogo.naturalHeight
+		)
+
+		const logoWidth = centerLogo.naturalWidth * logoRatio
+		const logoHeight = centerLogo.naturalHeight * logoRatio
+
+		ctx.drawImage(
+			centerLogo,
+			cx - logoWidth / 2,
+			cy - logoHeight / 2,
+			logoWidth,
+			logoHeight
+		)
+	} else {
+		ctx.fillStyle = '#e60012'
+		ctx.font = 'bold 13px Arial'
+		ctx.textAlign = 'center'
+		ctx.textBaseline = 'middle'
+		ctx.fillText('Con Cưng', cx, cy)
+	}
+}
+const openSpunPopup = () => {
+	if (!hasSpun.value) {
+		return
+	}
+
+	if (!currentPrize.value) {
+		const savedPrize = localStorage.getItem(PRIZE_KEY)
+
+		if (savedPrize) {
+			currentPrize.value = JSON.parse(savedPrize)
+		}
+	}
+
+	if (currentPrize.value) {
+		showPrizePopup.value = true
+	}
 }
 
+const handleCanvasClick = event => {
+	const canvas = wheelCanvas.value
+	if (!canvas) return
+
+	const rect = canvas.getBoundingClientRect()
+
+	const scaleX = canvas.width / rect.width
+	const scaleY = canvas.height / rect.height
+
+	const x = (event.clientX - rect.left) * scaleX
+	const y = (event.clientY - rect.top) * scaleY
+
+	const cx = canvas.width / 2
+	const cy = canvas.height / 2
+	const logoRadius = 38
+
+	const distance = Math.sqrt(
+		Math.pow(x - cx, 2) + Math.pow(y - cy, 2)
+	)
+
+	if (distance <= logoRadius) {
+		openSpunPopup()
+	}
+}
 const spinWheel = (forcedPrizeId = null) => {
 	if (isSpinning.value) return
+
+	if (hasSpun.value) {
+		alert('Thiết bị này đã quay rồi!')
+		return
+	}
+
+	hasSpun.value = true
+	localStorage.setItem(HAS_SPUN_KEY, '1')
 
 	let winnerIndex = forcedPrizeId
 		? prizes.findIndex(item => item.id === forcedPrizeId)
@@ -270,8 +362,10 @@ const spinWheel = (forcedPrizeId = null) => {
 		} else {
 			currentRotation = totalRotation
 			currentPrize.value = prizes[winnerIndex]
-			isSpinning.value = false
 
+			localStorage.setItem(PRIZE_KEY, JSON.stringify(currentPrize.value))
+
+			isSpinning.value = false
 			showPrizePopup.value = true
 		}
 	}
@@ -395,16 +489,16 @@ const spinWheel = (forcedPrizeId = null) => {
 									:style="{ transform: `rotate(${(n - 1) * 15}deg) translateY(-150px)` }"></span>
 							</div>
 
-							<canvas ref="wheelCanvas" width="360" height="360" class="wheel-canvas"></canvas>
+							<canvas ref="wheelCanvas" width="360" height="360" class="wheel-canvas"
+								@click="handleCanvasClick"></canvas>
 						</div>
 
-						<button class="spin-btn" @click="spinWheel(1)" :disabled="isSpinning">
-							{{ isSpinning ? 'Đang quay...' : 'Quay nhận quà' }}
+						<button class="spin-btn" @click="spinWheel(1)" :disabled="isSpinning || hasSpun">
+							{{ hasSpun ? 'ĐÃ QUAY' : isSpinning ? 'ĐANG QUAY...' : 'QUAY NGAY' }}
 						</button>
 					</div>
 				</div>
 			</div>
-			<PrizePopup :show="showPrizePopup" :prize="currentPrize" @close="showPrizePopup = false" />
 
 			<div class="block-menu">
 				<div class="container px-0 w-100 text-left position-relative"
@@ -530,6 +624,7 @@ const spinWheel = (forcedPrizeId = null) => {
 			</div>
 		</div>
 	</div>
+	<PrizePopup :show="showPrizePopup" :prize="currentPrize" @close="showPrizePopup = false" />
 </template>
 <style scoped>
 .banner-bg {

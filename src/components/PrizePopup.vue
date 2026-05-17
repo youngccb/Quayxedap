@@ -1,44 +1,47 @@
 <template>
-	<div v-if="show && prize" class="popup-overlay">
-		<div class="popup-box">
-			<button class="close-btn" @click="$emit('close')">
-				✕
-			</button>
-
-			<div class="popup-logo">
-				<img src="/img/logo.png" alt="Con Cưng">
-			</div>
-
-			<p class="popup-success">
-				Kêt Thúc Vòng Quay!
-			</p>
-
-			<h3>Ba mẹ nhận được</h3>
-
-
-			<div class="prize-card">
-				<div class="prize-image-wrap">
-					<img v-if="prize.image" :src="prize.image" :alt="prize.name" class="prize-image">
+	<transition name="popup-fade">
+		<div v-if="show && prize" class="popup-overlay" @click.self="$emit('close')">
+			<div class="popup-box">
+				<div class="popup-top">
+					<img src="/img/bannerpopup.png" alt="">
 				</div>
 
-				<div class="prize-name">
-					{{ prize.name }}
+				<div class="popup-content">
+					<div class="popup-image" v-if="prize.image">
+						<img :src="prize.image" :alt="prize.name">
+					</div>
+
+					<div class="popup-icon" v-else>
+						🎁
+					</div>
+
+					<div class="popup-title">
+						Ba mẹ nhận được
+					</div>
+
+					<div class="popup-prize">
+						{{ prize.name }}
+					</div>
+
+					<p v-if="prize.description" class="popup-description">
+						{{ prize.description }}
+					</p>
+
+					<p class="popup-note">
+						Ba mẹ vui lòng chụp ảnh lại gửi cho quản lý để được xác nhận hoàn thành nhé!
+					</p>
+
+					<button class="popup-btn" @click="$emit('close')">
+						Đóng
+					</button>
 				</div>
-
-				<p v-if="prize.description" class="prize-description">
-					{{ prize.description }}
-				</p>
-			</div>
-
-			<div class="popup-note">
-				Ba mẹ vui lòng chụp ảnh lại gửi cho quản lý để được xác nhận hoàn thành nhé!
 			</div>
 		</div>
-	</div>
+	</transition>
 </template>
 
 <script setup>
-defineProps({
+const props = defineProps({
 	show: {
 		type: Boolean,
 		default: false
@@ -49,199 +52,190 @@ defineProps({
 	}
 })
 
-defineEmits(['close'])
+const emit = defineEmits(['close'])
+
+const closePopup = () => {
+	emit('close')
+}
 </script>
+
 
 <style scoped>
 .popup-overlay {
 	position: fixed;
 	inset: 0;
-	background: rgba(0, 0, 0, 0.32);
-	backdrop-filter: blur(6px);
+	z-index: 9999;
+	background: rgba(0, 0, 0, .45);
+	backdrop-filter: blur(5px);
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	z-index: 9999;
-	padding: 18px;
+	padding: 12px;
 }
 
 .popup-box {
-	position: relative;
 	width: 100%;
 	max-width: 390px;
-	padding: 28px 22px 24px;
-	text-align: center;
-	border-radius: 28px;
-	overflow: hidden;
-	background: linear-gradient(135deg, #fce1f7 0%, #f777c1 48%, #ffd9f7 100%);
-	box-shadow:
-		0 16px 35px rgba(249, 78, 205, 0.22),
-		0 0 0 6px #fff,
-		0 0 0 10px #ff68c0;
-	animation: popupBounce .45s ease;
-}
-
-.popup-box::before {
-	content: "⭐";
-	position: absolute;
-	top: 12px;
-	left: 18px;
-	font-size: 26px;
-	animation: floatStar 2s infinite ease-in-out;
-}
-
-.popup-box::after {
-	content: "🎁";
-	position: absolute;
-	right: 18px;
-	bottom: 6px;
-	font-size: 40px;
-	opacity: .9;
-	animation: floatStar 2s infinite ease-in-out;
-}
-
-.close-btn {
-	position: absolute;
-	top: 14px;
-	right: 14px;
-	width: 38px;
-	height: 38px;
-	border: none;
-	border-radius: 50%;
-	background: rgba(255, 255, 255, .92);
-	color: #e6007e;
-	font-size: 22px;
-	font-weight: bold;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	box-shadow: 0 4px 10px rgba(0, 0, 0, .08);
-	transition: .25s;
-	z-index: 10;
-}
-
-.close-btn:hover {
-	transform: rotate(90deg) scale(1.08);
 	background: #fff;
-}
-
-.popup-logo {
-	position: relative;
-	z-index: 1;
-	margin: 0 auto 12px;
-	display: flex;
-	justify-content: center;
-}
-
-.popup-logo img {
-	width: 150px;
-	height: 65px;
-	object-fit: contain;
-}
-
-.popup-success {
-	position: relative;
-	z-index: 1;
-	display: inline-block;
-	margin: 0 0 12px;
-	padding: 8px 14px;
-	border-radius: 999px;
-	background: rgba(255, 255, 255, .82);
-	color: #e6007e;
-	font-size: 15px;
-	line-height: 1.5;
-	font-weight: 800;
-}
-
-.popup-box h3 {
-	position: relative;
-	z-index: 1;
-	margin: 0 0 14px;
-	font-size: 28px;
-	font-weight: 900;
-	color: #e6007e;
-	text-shadow: 2px 2px 0 #fff;
-}
-
-.prize-card {
-	position: relative;
-	z-index: 1;
-	background: rgba(255, 255, 255, .86);
 	border-radius: 22px;
-	padding: 16px 14px;
-	box-shadow: inset 0 0 0 1px rgba(230, 0, 126, .16);
+	overflow: hidden;
+	box-shadow: 0 18px 45px rgba(0, 0, 0, .24);
+	animation: popupBounce .42s ease;
 }
 
-.prize-image-wrap {
-	width: 150px;
-	height: 115px;
-	margin: 0 auto 80px;
+.popup-top {
+	width: 100%;
+	height: 138px;
+	padding: 0;
+	background: #f9c3f0;
+	line-height: 0;
+	overflow: hidden;
+}
+
+.popup-top img {
+	width: 100%;
+	height: 100%;
+	display: block;
+	object-fit: cover;
+	object-position: center;
+}
+
+.popup-content {
+	padding: 18px 22px 20px;
+	text-align: center;
+}
+
+.popup-image {
+	width: 100%;
+	height: 185px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	margin: 0 auto 10px;
 }
 
-.prize-image {
-	max-width: 225px;
-	max-height: 350px;
+.popup-image img {
+	max-width: 260px;
+	max-height: 175px;
+	width: auto;
+	height: auto;
 	object-fit: contain;
-	margin-top: 115px;
+	display: block;
 }
 
-.prize-name {
-	color: #d6006f;
+.popup-icon {
+	height: 160px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 70px;
+	margin-bottom: 10px;
+}
+
+.popup-title {
+	margin-top: 4px;
 	font-size: 22px;
-	font-weight: 900;
+	font-weight: 800;
+	color: #333;
 	line-height: 1.25;
 }
 
-.prize-description {
+.popup-prize {
+	margin-top: 8px;
+	font-size: 26px;
+	font-weight: 1000;
+	color: #e53185;
+	line-height: 1.2;
+}
+
+.popup-description {
 	margin: 8px 0 0;
 	color: #555;
-	font-size: 15px;
-	line-height: 1.55;
+	font-size: 14px;
+	line-height: 1.45;
 }
 
 .popup-note {
-	position: relative;
-	z-index: 1;
-	margin-top: 18px;
-	padding: 14px 16px;
-	border-radius: 18px;
-	background: linear-gradient(90deg, #e6007e, #f9a7e8);
-	color: white;
-	font-size: 14px;
-	line-height: 1.6;
-	font-weight: 700;
-	box-shadow: 0 8px 18px rgba(230, 0, 126, .24);
+	max-width: 310px;
+	margin: 14px auto 0;
+	font-size: 13px;
+	line-height: 1.45;
+	color: #666;
+}
+
+.popup-btn {
+	margin-top: 20px;
+	width: 100%;
+	height: 46px;
+	border: none;
+	border-radius: 12px;
+	background: linear-gradient(180deg, #ff4f99, #f11f7b);
+	color: #fff;
+	font-size: 16px;
+	font-weight: 900;
+	cursor: pointer;
+	box-shadow: 0 8px 18px rgba(241, 31, 123, .22);
+}
+
+.popup-btn:active {
+	transform: translateY(1px);
+}
+
+.popup-fade-enter-active,
+.popup-fade-leave-active {
+	transition: opacity .25s ease;
+}
+
+.popup-fade-enter-from,
+.popup-fade-leave-to {
+	opacity: 0;
 }
 
 @keyframes popupBounce {
 	0% {
 		opacity: 0;
-		transform: scale(.72) rotate(-5deg);
+		transform: scale(.78) translateY(12px);
 	}
 
-	65% {
-		transform: scale(1.05) rotate(2deg);
+	70% {
+		transform: scale(1.04) translateY(0);
 	}
 
 	100% {
 		opacity: 1;
-		transform: scale(1) rotate(0);
+		transform: scale(1);
 	}
 }
 
-@keyframes floatStar {
-
-	0%,
-	100% {
-		transform: translateY(0) rotate(0);
+@media (max-width: 390px) {
+	.popup-box {
+		max-width: 352px;
+		border-radius: 20px;
 	}
 
-	50% {
-		transform: translateY(-6px) rotate(12deg);
+	.popup-top {
+		height: 132px;
+	}
+
+	.popup-content {
+		padding: 16px 20px 20px;
+	}
+
+	.popup-image {
+		height: 170px;
+	}
+
+	.popup-image img {
+		max-width: 240px;
+		max-height: 160px;
+	}
+
+	.popup-title {
+		font-size: 21px;
+	}
+
+	.popup-prize {
+		font-size: 25px;
 	}
 }
 </style>
