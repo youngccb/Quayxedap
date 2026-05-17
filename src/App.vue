@@ -1,61 +1,289 @@
 <script setup>
-import { ref } from 'vue'
-import SurveyPopup from './components/SurveyPopup.vue'
-const currentIndex = ref(0)
-const reviewList = ref(null)
+import { ref, onMounted } from 'vue'
+import PrizePopup from './components/PrizePopup.vue'
+const wheelCanvas = ref(null)
+const isSpinning = ref(false)
+const currentPrize = ref(null)
 
-const selectedAnswer = ref('')
-const showPopup = ref(false)
-const popupMessage = ref('')
+const showPrizePopup = ref(false)
+const prizeImages = {}
+onMounted(() => {
+	ctx = wheelCanvas.value.getContext('2d')
 
-const messages = {
-	A: 'A. Tuyệt vời! Con Cưng luôn cố gắng mang đủ mọi sản phẩm để ba mẹ đến một nơi là mua được hết cho bé. Cảm ơn ba mẹ đã tin chọn ạ!',
-	B: 'B. Cảm ơn ba mẹ! Đây chính là động lực để đội ngũ Con Cưng phục vụ nhiệt tình hơn mỗi ngày. Ba mẹ hài lòng là niềm vui lớn nhất của cửa hàng đó ạ!',
-	C: 'C. Ôi đúng rồi ạ! Chương trình ưu đãi luôn được Con Cưng chuẩn bị kỹ để tri ân khách hàng. Cảm ơn ba mẹ đã luôn đồng hành và săn quà cùng Con Cưng!'
-}
+	let loaded = 0
+	const total = prizes.filter(item => item.image).length
 
-const selectAnswer = (type) => {
-	selectedAnswer.value = type
-	popupMessage.value = messages[type]
-	showPopup.value = true
-}
-
-const submitSurvey = () => {
-	if (!selectedAnswer.value) {
-		alert('Ba mẹ vui lòng chọn một câu trả lời ạ!')
+	if (total === 0) {
+		drawWheel(0)
 		return
 	}
 
-	popupMessage.value = messages[selectedAnswer.value]
-	showPopup.value = true
-}
+	prizes.forEach(prize => {
+		if (prize.image) {
+			const img = new Image()
 
-const reviews = [
-	{ image: '/img/review1.png' },
-	{ image: '/img/review3.png' },
-	{ image: '/img/review4.png' },
+			img.onload = () => {
+				loaded++
+
+				if (loaded === total) {
+					drawWheel(0)
+				}
+			}
+
+			img.onerror = () => {
+				loaded++
+
+				if (loaded === total) {
+					drawWheel(0)
+				}
+			}
+
+			img.src = prize.image
+			prizeImages[prize.id] = img
+		}
+	})
+})
+const prizes = [
+	{ id: 1, name: 'Xe ô tô điện', color: '#ffffff', image: '/img/xeoto.png' },
+	{ id: 2, name: 'Chúc bạn may mắn lần sau', color: '#ef3f3f' },
+	{ id: 3, name: 'Xe chòi chân', color: '#ffffff', image: '/img/xechoi.png' },
+	{ id: 4, name: 'Chúc bạn may mắn lần sau', color: '#ef3f3f' },
+	{ id: 5, name: 'Xe đạp', color: '#ffffff', image: '/img/xedap.png' },
+	{ id: 6, name: 'Chúc bạn may mắn lần sau', color: '#ef3f3f' }
 ]
 
-const changeSlide = (index) => {
-	currentIndex.value = index
+let ctx = null
+let currentRotation = 0
 
-	const itemWidth = reviewList.value.children[0].offsetWidth + 16
+const drawWheel = (rotation = 0) => {
+	const canvas = wheelCanvas.value
+	if (!canvas || !ctx) return
 
-	reviewList.value.scrollTo({
-		left: itemWidth * index,
-		behavior: 'smooth'
+	const cx = canvas.width / 2
+	const cy = canvas.height / 2
+
+	// vòng quà nhỏ hơn để chừa chỗ cho vòng đèn ngoài
+	const radius = cx - 24
+	const arc = (Math.PI * 2) / prizes.length
+
+	ctx.clearRect(0, 0, canvas.width, canvas.height)
+
+	// viền đỏ ngoài
+	ctx.beginPath()
+	ctx.arc(cx, cy, radius + 17, 0, Math.PI * 2)
+	ctx.strokeStyle = '#c90000'
+	ctx.lineWidth = 8
+	ctx.stroke()
+
+	// vẽ các ô quà
+	// vẽ các ô quà
+	prizes.forEach((prize, index) => {
+		const startAngle = rotation + index * arc - Math.PI / 2
+		const endAngle = startAngle + arc
+		const midAngle = startAngle + arc / 2
+
+		ctx.beginPath()
+		ctx.moveTo(cx, cy)
+		ctx.arc(cx, cy, radius, startAngle, endAngle)
+		ctx.closePath()
+		ctx.fillStyle = prize.color
+		ctx.fill()
+
+		ctx.strokeStyle = '#ffffff'
+		ctx.lineWidth = 3
+		ctx.stroke()
+
+		// tách riêng vị trí text và ảnh
+		const textRadius = radius * 0.64
+		const imageRadius = radius * 0.62
+
+		// ô chúc may mắn -> hiện chữ
+		if (prize.name.includes('Chúc bạn may mắn')) {
+			ctx.save()
+
+			ctx.translate(
+				cx + Math.cos(midAngle) * textRadius,
+				cy + Math.sin(midAngle) * textRadius
+			)
+
+			ctx.rotate(midAngle)
+
+			if (midAngle > Math.PI / 2 && midAngle < Math.PI * 1.5) {
+				ctx.rotate(Math.PI)
+			}
+
+			ctx.fillStyle = '#fff'
+			ctx.font = 'bold 15px Arial'
+			ctx.textAlign = 'center'
+			ctx.textBaseline = 'middle'
+
+			const words = prize.name.split(' ')
+			let line = ''
+			const lines = []
+
+			words.forEach(word => {
+				const testLine = line + word + ' '
+
+				if (ctx.measureText(testLine).width > 90) {
+					lines.push(line)
+					line = word + ' '
+				} else {
+					line = testLine
+				}
+			})
+
+			lines.push(line)
+
+			lines.forEach((txt, i) => {
+				ctx.fillText(
+					txt.trim(),
+					0,
+					(i - (lines.length - 1) / 2) * 16
+				)
+			})
+
+			ctx.restore()
+		}
+
+		// ô quà -> hiện hình
+		else if (prize.image) {
+			const img = prizeImages[prize.id]
+
+			if (img && img.complete && img.naturalWidth > 0) {
+				ctx.save()
+
+				ctx.translate(
+					cx + Math.cos(midAngle) * imageRadius,
+					cy + Math.sin(midAngle) * imageRadius
+				)
+
+				// xoay ảnh theo múi, nhìn cân hơn
+				ctx.rotate(midAngle + Math.PI / 2)
+
+				if (midAngle > Math.PI / 2 && midAngle < Math.PI * 1.5) {
+					ctx.rotate(Math.PI)
+				}
+
+				// khung an toàn cho ảnh
+				const maxWidth = 125
+				const maxHeight = 125
+
+				const ratio = Math.min(
+					maxWidth / img.naturalWidth,
+					maxHeight / img.naturalHeight
+				)
+
+				const drawWidth = img.naturalWidth * ratio
+				const drawHeight = img.naturalHeight * ratio
+
+				// tinh chỉnh nhẹ cho cân mắt
+				const offsetX = 0
+				const offsetY = -2
+
+				ctx.drawImage(
+					img,
+					-drawWidth / 2 + offsetX,
+					-drawHeight / 2 + offsetY,
+					drawWidth,
+					drawHeight
+				)
+
+				ctx.restore()
+			}
+		}
 	})
+
+	// vòng đèn ngoài khớp sát viền
+	const lightRadius = radius + 16
+	const lightCount = 24
+
+	for (let i = 0; i < lightCount; i++) {
+		const angle = rotation + (Math.PI * 2 / lightCount) * i - Math.PI / 2
+		const x = cx + Math.cos(angle) * lightRadius
+		const y = cy + Math.sin(angle) * lightRadius
+
+		ctx.save()
+		ctx.beginPath()
+		ctx.arc(x, y, 4.5, 0, Math.PI * 2)
+		ctx.fillStyle = '#fff8d8'
+		ctx.fill()
+
+		ctx.strokeStyle = '#ffd34d'
+		ctx.lineWidth = 1
+		ctx.stroke()
+		ctx.restore()
+	}
+
+	// tâm vòng quay
+	ctx.beginPath()
+	ctx.arc(cx, cy, 38, 0, Math.PI * 2)
+	ctx.fillStyle = '#fff'
+	ctx.fill()
+	ctx.strokeStyle = '#ffd34d'
+	ctx.lineWidth = 5
+	ctx.stroke()
+
+	ctx.fillStyle = '#e60012'
+	ctx.font = 'bold 13px Arial'
+	ctx.textAlign = 'center'
+	ctx.textBaseline = 'middle'
+	ctx.fillText('Con Cưng', cx, cy)
 }
 
-const onScroll = () => {
-	const itemWidth = reviewList.value.children[0].offsetWidth + 16
-	currentIndex.value = Math.round(reviewList.value.scrollLeft / itemWidth)
+const spinWheel = (forcedPrizeId = null) => {
+	if (isSpinning.value) return
+
+	let winnerIndex = forcedPrizeId
+		? prizes.findIndex(item => item.id === forcedPrizeId)
+		: Math.floor(Math.random() * prizes.length)
+
+	if (winnerIndex < 0) winnerIndex = 0
+
+	isSpinning.value = true
+
+	const arc = (Math.PI * 2) / prizes.length
+	const randomOffset = (Math.random() - 0.5) * (arc * 0.7)
+
+	const targetAngle = -(winnerIndex * arc + arc / 2 + randomOffset)
+	const fullSpins = 8 * Math.PI * 2
+
+	const totalRotation =
+		currentRotation +
+		fullSpins +
+		targetAngle -
+		(currentRotation % (Math.PI * 2))
+
+	const duration = 4200
+	const start = performance.now()
+	const startRotation = currentRotation
+
+	const easeOut = t => 1 - Math.pow(1 - t, 4)
+
+	const animate = now => {
+		const progress = Math.min((now - start) / duration, 1)
+		const rotation = startRotation + (totalRotation - startRotation) * easeOut(progress)
+
+		drawWheel(rotation)
+
+		if (progress < 1) {
+			requestAnimationFrame(animate)
+		} else {
+			currentRotation = totalRotation
+			currentPrize.value = prizes[winnerIndex]
+			isSpinning.value = false
+
+			showPrizePopup.value = true
+		}
+	}
+
+	requestAnimationFrame(animate)
 }
+
 </script>
 
 <template>
-  	<div class="pt-0   " id="main-content">
-          <img src="/img/banner.png" class="banner-bg" />
+	<div class="pt-0   " id="main-content">
+		<img src="/img/banner.png" class="banner-bg" />
 		<div class="container pb-3 font-12"
 			style="padding-top:30px; background:#F5F7FD /*savepage-url=/themes/mobile4.1/image/bg/profile.png*/ var(--savepage-url-23) no-repeat;    background-size: contain; ">
 			<div class="container px-0 w-100 d-flex justify-content-between text-center position-relative"
@@ -158,77 +386,26 @@ const onScroll = () => {
 					<!-- <h1><span><img src="https://concung.com/themes/mobile4.1/image/icon/customer-order.svg" alt=""></span>Khảo sát khách hàng</h1> -->
 				</div>
 				<div class="tab-content">
-					<div class="survey-box">
-						<h3>Khi đến mua sắm tại Con Cưng, điều gì khiến ba mẹ cảm thấy hài lòng nhất?</h3>
+					<div class="wheel-wrap">
+						<div class="wheel-pointer"></div>
 
-						<div
-							class="option"
-							:class="{ active: selectedAnswer === 'A' }"
-							@click="selectAnswer('A')"
-						>
-							<span>A</span>
-							Sản phẩm đa dạng – cái gì cho mẹ & bé cũng có
+						<div class="wheel-border">
+							<div class="wheel-lights">
+								<span v-for="n in 24" :key="n"
+									:style="{ transform: `rotate(${(n - 1) * 15}deg) translateY(-150px)` }"></span>
+							</div>
+
+							<canvas ref="wheelCanvas" width="360" height="360" class="wheel-canvas"></canvas>
 						</div>
 
-						<div
-							class="option"
-							:class="{ active: selectedAnswer === 'B' }"
-							@click="selectAnswer('B')"
-						>
-							<span>B</span>
-							Nhân viên tư vấn nhiệt tình, dễ thương
-						</div>
-
-						<div
-							class="option"
-							:class="{ active: selectedAnswer === 'C' }"
-							@click="selectAnswer('C')"
-						>
-							<span>C</span>
-							Nhiều ưu đãi & quà tặng hấp dẫn
-						</div>
-
-						<br>
-
-						<span class=" italic color-20 luu">* Ba mẹ chỉ chọn 1 đáp án thôi nhé!</span> <br>
-						<span class=" italic color-20 luu">* Vui lòng chụp ảnh đáp án gửi cho quản lý để được xác nhận hoàn thành</span>
-						<p id="result"></p>
+						<button class="spin-btn" @click="spinWheel(1)" :disabled="isSpinning">
+							{{ isSpinning ? 'Đang quay...' : 'Quay nhận quà' }}
+						</button>
 					</div>
 				</div>
 			</div>
-				<SurveyPopup
-					:show="showPopup"
-					:message="popupMessage"
-					@close="showPopup = false"
-				/>	
-			<div class="container bg-white box-shadow border-radius-12 review-section">
+			<PrizePopup :show="showPrizePopup" :prize="currentPrize" @close="showPrizePopup = false" />
 
-				<div
-					ref="reviewList"
-					class="review-list"
-					@scroll="onScroll"
-				>
-					<div
-						class="review-item"
-						v-for="(item, index) in reviews"
-						:key="index"
-					>
-						<img :src="item.image" class="review-banner">
-					</div>
-				</div>
-
-				<div class="slider-dots">
-					<span
-						v-for="(item, index) in reviews"
-						:key="index"
-						class="dot"
-						:class="{ active: currentIndex === index }"
-						@click="changeSlide(index)"
-					></span>
-				</div>
-
-			</div>
-			
 			<div class="block-menu">
 				<div class="container px-0 w-100 text-left position-relative"
 					style="margin-top:15px;  padding-top:8px;border-radius: 12px; ">
@@ -355,12 +532,183 @@ const onScroll = () => {
 	</div>
 </template>
 <style scoped>
-    .banner-bg {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 200px;
-        z-index: -1;
-    }
+.banner-bg {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: auto;
+	z-index: -1;
+}
+
+.wheel-wrap {
+	position: relative;
+	text-align: center;
+	margin: 30px auto;
+}
+
+.wheel-border {
+	width: 360px;
+	height: 360px;
+	margin: auto;
+	position: relative;
+	border-radius: 50%;
+	background: linear-gradient(145deg, #ff4242, #b80000);
+	box-shadow:
+		0 14px 28px rgba(0, 0, 0, .28),
+		inset 0 4px 6px rgba(255, 255, 255, .45),
+		inset 0 -6px 12px rgba(0, 0, 0, .35);
+}
+
+.wheel-border::before {
+	content: "";
+	position: absolute;
+	inset: 11px;
+	border-radius: 50%;
+	border: 3px solid #ffd34d;
+	z-index: 4;
+}
+
+.wheel-border::after {
+	content: "";
+	position: absolute;
+	inset: 24px;
+	border-radius: 50%;
+	border: 4px solid #fff;
+	z-index: 4;
+	pointer-events: none;
+}
+
+.wheel-lights {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	z-index: 6;
+}
+
+.wheel-lights span {
+	position: absolute;
+	width: 11px;
+	height: 11px;
+	margin: -5.5px;
+	border-radius: 50%;
+	background: radial-gradient(circle, #fff 0%, #fff6b0 45%, #ffcf33 100%);
+	box-shadow: 0 0 10px #fff6b0;
+	animation: lightBlink .7s infinite alternate;
+}
+
+.wheel-lights span:nth-child(even) {
+	animation-delay: .35s;
+}
+
+.wheel-inner {
+	position: absolute;
+	inset: 28px;
+	border-radius: 50%;
+	overflow: hidden;
+	background: #fff;
+	z-index: 2;
+}
+
+.wheel {
+	width: 100%;
+	height: 100%;
+	border-radius: 50%;
+	position: relative;
+	overflow: hidden;
+	background: conic-gradient(from -90deg,
+			#ffffff 0deg 60deg,
+			#ffb300 60deg 120deg,
+			#ffffff 120deg 180deg,
+			#ffb300 180deg 240deg,
+			#ffffff 240deg 300deg,
+			#ffb300 300deg 360deg);
+	transition: transform 3.6s cubic-bezier(.12, .75, .25, 1);
+}
+
+.wheel-label {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 50%;
+	height: 50%;
+	transform-origin: 0 0;
+}
+
+.wheel-label span {
+	position: absolute;
+	left: 28px;
+	top: -108px;
+	width: 90px;
+	color: #fff;
+	font-size: 12px;
+	font-weight: 700;
+	line-height: 1.25;
+	text-align: center;
+	text-shadow: 0 2px 3px rgba(0, 0, 0, .25);
+	transform: rotate(90deg);
+}
+
+.wheel-center {
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	width: 72px;
+	height: 72px;
+	transform: translate(-50%, -50%);
+	border-radius: 50%;
+	background: #fff;
+	z-index: 5;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	font-size: 13px;
+	font-weight: 800;
+	color: #e60012;
+	box-shadow:
+		0 4px 10px rgba(0, 0, 0, .25),
+		inset 0 0 0 4px #fff3d0;
+}
+
+.wheel-pointer {
+	position: absolute;
+	top: -6px;
+	left: 50%;
+	transform: translateX(-50%);
+	z-index: 10;
+	width: 0;
+	height: 0;
+	border-left: 18px solid transparent;
+	border-right: 18px solid transparent;
+	border-top: 38px solid #e00000;
+	filter: drop-shadow(0 3px 3px rgba(0, 0, 0, .3));
+}
+
+.spin-btn {
+	margin-top: 22px;
+	margin-bottom: 22px;
+	border: none;
+	border-radius: 999px;
+	padding: 12px 28px;
+	background: linear-gradient(180deg, #ED4384, #ED4384);
+	color: #fff;
+	font-weight: 800;
+	box-shadow: 0 6px 14px rgba(231, 76, 0, .35);
+}
+
+.spin-btn:disabled {
+	opacity: .6;
+}
+
+@keyframes lightBlink {
+	from {
+		opacity: .45;
+		filter: brightness(.8);
+	}
+
+	to {
+		opacity: 1;
+		filter: brightness(1.8);
+	}
+}
 </style>

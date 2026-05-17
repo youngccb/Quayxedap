@@ -5,6 +5,6 @@ import App from './App.vue'
 
 createApp(App).mount('#app')
 
-setupDisableDevtools({
-    enableDetector: true,
-})
+// setupDisableDevtools({
+//     enableDetector: true,
+// })
