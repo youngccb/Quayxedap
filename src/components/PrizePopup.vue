@@ -112,11 +112,12 @@ const closePopup = () => {
 	align-items: center;
 	justify-content: center;
 	margin: 0 auto 10px;
+	padding-top: 48px;
 }
 
 .popup-image img {
 	max-width: 260px;
-	max-height: 175px;
+	max-height: 400px;
 	width: auto;
 	height: auto;
 	object-fit: contain;

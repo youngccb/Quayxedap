@@ -7,6 +7,8 @@ const isSpinning = ref(false)
 const currentPrize = ref(null)
 const showPrizePopup = ref(false)
 
+const SPIN_DURATION = 7500        // thời gian vòng quay, ms
+const POPUP_DELAY = 200          // thời gian chờ sau khi dừng rồi mới hiện popup, ms
 
 const HAS_SPUN_KEY = 'concung_has_spun'
 const PRIZE_KEY = 'concung_current_prize'
@@ -334,10 +336,10 @@ const spinWheel = (forcedPrizeId = null) => {
 	isSpinning.value = true
 
 	const arc = (Math.PI * 2) / prizes.length
-	const randomOffset = (Math.random() - 0.5) * (arc * 0.7)
+	const randomOffset = (Math.random() - 0.5) * (arc * 0.45)
 
 	const targetAngle = -(winnerIndex * arc + arc / 2 + randomOffset)
-	const fullSpins = 8 * Math.PI * 2
+	const fullSpins = 12 * Math.PI * 2
 
 	const totalRotation =
 		currentRotation +
@@ -345,11 +347,11 @@ const spinWheel = (forcedPrizeId = null) => {
 		targetAngle -
 		(currentRotation % (Math.PI * 2))
 
-	const duration = 4200
+	const duration = SPIN_DURATION
 	const start = performance.now()
 	const startRotation = currentRotation
 
-	const easeOut = t => 1 - Math.pow(1 - t, 4)
+	const easeOut = t => 1 - Math.pow(1 - t, 5)
 
 	const animate = now => {
 		const progress = Math.min((now - start) / duration, 1)
@@ -366,7 +368,10 @@ const spinWheel = (forcedPrizeId = null) => {
 			localStorage.setItem(PRIZE_KEY, JSON.stringify(currentPrize.value))
 
 			isSpinning.value = false
-			showPrizePopup.value = true
+
+			setTimeout(() => {
+				showPrizePopup.value = true
+			}, POPUP_DELAY)
 		}
 	}
 
