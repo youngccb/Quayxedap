@@ -21,6 +21,28 @@ centerLogo.src = '/img/logo.png'
 
 const prizeImages = {}
 
+const CANVAS_SIZE = 360
+let dpr = 1
+
+const setupCanvas = () => {
+	const canvas = wheelCanvas.value
+	if (!canvas) return
+
+	dpr = window.devicePixelRatio || 1
+
+	canvas.style.width = CANVAS_SIZE + 'px'
+	canvas.style.height = CANVAS_SIZE + 'px'
+
+	canvas.width = CANVAS_SIZE * dpr
+	canvas.height = CANVAS_SIZE * dpr
+
+	ctx = canvas.getContext('2d')
+	ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+
+	ctx.imageSmoothingEnabled = true
+	ctx.imageSmoothingQuality = 'high'
+}
+
 onMounted(() => {
 	hasSpun.value = localStorage.getItem(HAS_SPUN_KEY) === '1'
 
@@ -29,7 +51,7 @@ onMounted(() => {
 		currentPrize.value = JSON.parse(savedPrize)
 	}
 
-	ctx = wheelCanvas.value.getContext('2d')
+	setupCanvas()
 
 	centerLogo.onload = () => {
 		drawWheel(0)
@@ -114,13 +136,13 @@ const drawWheel = (rotation = 0) => {
 	const canvas = wheelCanvas.value
 	if (!canvas || !ctx) return
 
-	const cx = canvas.width / 2
-	const cy = canvas.height / 2
+	const cx = CANVAS_SIZE / 2
+	const cy = CANVAS_SIZE / 2
 
 	const radius = cx - 34
 	const arc = (Math.PI * 2) / prizes.length
 
-	ctx.clearRect(0, 0, canvas.width, canvas.height)
+	ctx.clearRect(0, 0, CANVAS_SIZE, CANVAS_SIZE)
 
 	// bóng đổ ngoài vòng quay
 	ctx.save()
@@ -369,14 +391,14 @@ const handleCanvasClick = event => {
 
 	const rect = canvas.getBoundingClientRect()
 
-	const scaleX = canvas.width / rect.width
-	const scaleY = canvas.height / rect.height
+	const scaleX = CANVAS_SIZE / rect.width
+	const scaleY = CANVAS_SIZE / rect.height
 
 	const x = (event.clientX - rect.left) * scaleX
 	const y = (event.clientY - rect.top) * scaleY
 
-	const cx = canvas.width / 2
-	const cy = canvas.height / 2
+	const cx = CANVAS_SIZE / 2
+	const cy = CANVAS_SIZE / 2
 	const logoRadius = 38
 
 	const distance = Math.sqrt(
@@ -626,7 +648,7 @@ const spinWheel = (forcedPrizeId = null) => {
 								<span v-for="n in 24" :key="n"
 									:style="{ transform: `rotate(${(n - 1) * 15}deg) translateY(-150px)` }"></span>
 							</div>
-							<canvas ref="wheelCanvas" width="360" height="360" class="wheel-canvas"></canvas>
+							<canvas ref="wheelCanvas" class="wheel-canvas"></canvas>
 						</div>
 
 						<button class="spin-btn" @click="spinWheel(3)" :disabled="isSpinning || hasSpun">
@@ -858,7 +880,10 @@ const spinWheel = (forcedPrizeId = null) => {
 }
 
 .wheel-canvas {
-	cursor: pointer;
+	width: 360px;
+	height: 360px;
+	max-width: 100%;
+	display: block;
 }
 
 .wheel-label {
