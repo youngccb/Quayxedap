@@ -475,9 +475,9 @@ const spinWheel = (forcedPrizeId = null) => {
 </script>
 
 <template>
-	<div class="pt-0   " id="main-content">
+	<div class="pt-0 " id="main-content">
 		<img src="/img/banner.png" class="banner-bg" />
-		<div class="container pb-3 font-12"
+		<div class="container pb-3 font-12 game-page"
 			style="padding-top:30px; background:#F5F7FD /*savepage-url=/themes/mobile4.1/image/bg/profile.png*/ var(--savepage-url-23) no-repeat;    background-size: contain; ">
 			<div class="container px-0 w-100 d-flex justify-content-between text-center position-relative"
 				style=" z-index:3">
@@ -578,7 +578,7 @@ const spinWheel = (forcedPrizeId = null) => {
 				<div>
 					<!-- <h1><span><img src="https://concung.com/themes/mobile4.1/image/icon/customer-order.svg" alt=""></span>Khảo sát khách hàng</h1> -->
 				</div>
-				<div class="tab-content">
+				<div class="tab-content wheel-bg">
 					<div class="wheel-wrap">
 						<div class="wheel-pointer">
 							<svg width="34" height="82" viewBox="0 0 120 140" xmlns="http://www.w3.org/2000/svg">
@@ -651,7 +651,7 @@ const spinWheel = (forcedPrizeId = null) => {
 							<canvas ref="wheelCanvas" class="wheel-canvas"></canvas>
 						</div>
 
-						<button class="spin-btn" @click="spinWheel(3)" :disabled="isSpinning || hasSpun">
+						<button class="spin-btn" @click="spinWheel(1)" :disabled="isSpinning || hasSpun">
 							{{ hasSpun ? 'ĐÃ QUAY' : isSpinning ? 'ĐANG QUAY...' : 'QUAY NGAY' }}
 						</button>
 					</div>
@@ -1032,6 +1032,13 @@ const spinWheel = (forcedPrizeId = null) => {
 
 .spin-btn:disabled {
 	opacity: .6;
+}
+
+.game-page {
+	min-height: 100dvh;
+	background: #fde8ef;
+	padding-top: 30px;
+	padding-bottom: 80px !important;
 }
 
 @keyframes lightBlink {
