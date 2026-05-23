@@ -96,7 +96,8 @@ const prizes = [
 		name: 'Xe ô tô điện',
 		color: '#ffffff',
 		image: '/img/xeoto.png',
-		imageSize: 115
+		imageSize: 100,
+		rotate: 0
 	},
 	{
 		id: 2,
@@ -108,7 +109,8 @@ const prizes = [
 		name: 'Xe Scooter',
 		color: '#ffffff',
 		image: '/img/scooter.png',
-		imageSize: 80
+		imageSize: 65,
+		rotate: 0
 	},
 	{
 		id: 4,
@@ -120,10 +122,26 @@ const prizes = [
 		name: 'Xe đạp',
 		color: '#ffffff',
 		image: '/img/xedap.png',
-		imageSize: 125
+		imageSize: 100,
+		rotate: 75
 	},
 	{
 		id: 6,
+		name: 'Chúc bạn may mắn lần sau',
+		color: '#ec407a'
+	},
+	{
+		id: 7,
+		name: 'Voucher 200.000VND',
+		color: '#ffffff',
+		image: '/img/voucher.png',
+		imageSize: 58,
+		rotate: -100,
+		offsetX: -10,   // qua phải
+		offsetY: 5   // lên trên
+	},
+	{
+		id: 8,
 		name: 'Chúc bạn may mắn lần sau',
 		color: '#ec407a'
 	},
@@ -211,7 +229,7 @@ const drawWheel = (rotation = 0) => {
 			}
 
 			ctx.fillStyle = '#ffffff'
-			ctx.font = 'bold 17px Arial'
+			ctx.font = 'bold 12px Arial'
 			ctx.textAlign = 'center'
 			ctx.textBaseline = 'middle'
 			ctx.shadowColor = 'rgba(0, 0, 0, 0.22)'
@@ -221,7 +239,7 @@ const drawWheel = (rotation = 0) => {
 			const words = prize.name.split(' ')
 			let line = ''
 			const lines = []
-			const maxTextWidth = 95
+			const maxTextWidth = 75
 
 			words.forEach(word => {
 				const testLine = line + word + ' '
@@ -259,7 +277,11 @@ const drawWheel = (rotation = 0) => {
 					cy + Math.sin(midAngle) * imageRadius
 				)
 
-				ctx.rotate(midAngle + Math.PI / 2)
+				ctx.rotate(
+					midAngle +
+					Math.PI / 2 +
+					((prize.rotate || 0) * Math.PI / 180)
+				)
 
 				if (midAngle > Math.PI / 2 && midAngle < Math.PI * 1.5) {
 					ctx.rotate(Math.PI)
@@ -430,7 +452,7 @@ const spinWheel = (forcedPrizeId = null) => {
 	isSpinning.value = true
 
 	const arc = (Math.PI * 2) / prizes.length
-	const randomOffset = (Math.random() - 0.5) * (arc * 0.45)
+	const randomOffset = (Math.random() * 0.3 + 0.1) * arc
 
 	const targetAngle = -(winnerIndex * arc + arc / 2 + randomOffset)
 	const fullSpins = 12 * Math.PI * 2
